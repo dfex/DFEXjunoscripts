@@ -18,13 +18,14 @@ import "../import/junos.xsl";
 
 match / {
     <op-script-results> {
+        var $output-format = "%-35s%-10s%-13s%-12s%-10s%-10s%-10s%-5s";
+        <output> jcs:printf($output-format, "Peer", "AS", "State", "Duration", "Active", "Recevied", "Accepted", "Description");
 
         /* Get a list of all security policies */
         var $show-bgp-summary = {
             <command> "show bgp summary";
         }
         var $neighbour-list = jcs:invoke( $show-bgp-summary );
-        <output> jcs:printf("%-35s%-15s%-12s%-10s%-10s%-10s%-10s%-5s", "Peer", "AS", "State", "Duration", "Active", "Recevied", "Accepted", "Description");
 
         /* Loop through the results looking for count parameters */
         for-each ($neighbour-list/bgp-peer) {
@@ -36,7 +37,7 @@ match / {
                 set $received = $received + received-prefix-count;
                 set $accepted = $accepted + accepted-prefix-count;
             }
-            <output> jcs:printf("%-35s%-15s%-12s%-10s%-10s%-10s%-10s%-5s",
+            <output> jcs:printf($output-format,
                 peer-address,
                 peer-as,
                 peer-state,
