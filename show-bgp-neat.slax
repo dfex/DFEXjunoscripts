@@ -6,44 +6,45 @@
  * Neaten up "show bgp summary" to one neighbour per line
  *
  */
- 
+
 version 1.0;
- 
+
 ns junos = "http://xml.juniper.net/junos/*/junos";
 ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
 ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
- 
+
 import "../import/junos.xsl";
- 
- 
+
+
 match / {
     <op-script-results> {
- 
-    	/* Get a list of all security policies */
+
+        /* Get a list of all security policies */
         var $show-bgp-summary = {
             <command> "show bgp summary";
         }
         var $neighbour-list = jcs:invoke( $show-bgp-summary );
         <output> jcs:printf("%-35s%-15s%-12s%-10s%-10s%-10s%-10s%-5s", "Peer", "AS", "State", "Duration", "Active", "Recevied", "Accepted", "Description");
+
         /* Loop through the results looking for count parameters */
         for-each ($neighbour-list/bgp-peer) {
-			mvar $active = 0;
-			mvar $received = 0;
-			mvar $accepted = 0;
-			for-each (bgp-rib) {
-				set $active = $active + active-prefix-count;
-				set $received = $received + received-prefix-count;
-				set $accepted = $accepted + accepted-prefix-count;
-			}
+            mvar $active = 0;
+            mvar $received = 0;
+            mvar $accepted = 0;
+            for-each (bgp-rib) {
+                set $active = $active + active-prefix-count;
+                set $received = $received + received-prefix-count;
+                set $accepted = $accepted + accepted-prefix-count;
+            }
             <output> jcs:printf("%-35s%-15s%-12s%-10s%-10s%-10s%-10s%-5s",
                 peer-address,
                 peer-as,
                 peer-state,
                 elapsed-time,
-				$active,
-				$received,
-				$accepted,
-                description);   
+                $active,
+                $received,
+                $accepted,
+                description);
         }
     }
 }
