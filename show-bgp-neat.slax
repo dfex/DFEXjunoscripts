@@ -1,5 +1,5 @@
 /* show-bgp-neat.slax
- * September 24 2014
+ * September 23 2014
  * Version 1.2
  * Ben Dale - ben.dale@gmail.com
  *
@@ -14,7 +14,6 @@ ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
 ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
  
 import "../import/junos.xsl";
- 
  
 match / {
     <op-script-results> {
