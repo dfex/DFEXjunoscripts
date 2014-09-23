@@ -1,10 +1,10 @@
 /* show-bgp-neat.slax
- * September 22 2014
- * Version 1.1
+ * September 24 2014
+ * Version 1.2
  * Ben Dale - ben.dale@gmail.com
  *
  * Neaten up "show bgp summary" to one neighbour per line
- *
+ * Props to Phil Shafer (phil@juniper.net) for much neater, backwards compatible prefix summing
  */
  
 version 1.0;
@@ -27,22 +27,14 @@ match / {
         <output> jcs:printf("%-20s%-15s%-12s%-10s%-10s%-10s%-10s%-5s", "Peer", "AS", "State", "Duration", "Active", "Recevied", "Accepted", "Description");
         /* Loop through the results looking for count parameters */
         for-each ($neighbour-list/bgp-peer) {
-			mvar $active = 0;
-			mvar $received = 0;
-			mvar $accepted = 0;
-			for-each (bgp-rib) {
-				set $active = $active + active-prefix-count;
-				set $received = $received + received-prefix-count;
-				set $accepted = $accepted + accepted-prefix-count;
-			}
             <output> jcs:printf("%-20s%-15s%-12s%-10s%-10s%-10s%-10s%-5s",
                 peer-address,
                 peer-as,
                 peer-state,
                 elapsed-time,
-				$active,
-				$received,
-				$accepted,
+				sum(bgp-rib/active-prefix-count),
+				sum(bgp-rib/received-prefix-count),
+				sum(bgp-rib/accepted-prefix-count),
                 description);   
         }
     }
