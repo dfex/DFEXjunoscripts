@@ -1,6 +1,6 @@
 /* show-bgp-neat.slax
  * September 23 2014
- * Version 1.2
+ * Version 1.3
  * Ben Dale - ben.dale@gmail.com
  *
  * Neaten up "show bgp summary" to one neighbour per line
@@ -17,8 +17,8 @@ import "../import/junos.xsl";
 
 match / {
     <op-script-results> {
-        var $output-format = "%-35s%-10s%-13s%-12s%-10s%-10s%-10s%-5s";
-        <output> jcs:printf($output-format, "Peer", "AS", "State", "Duration", "Active", "Recevied", "Accepted", "Description");
+        var $output-format = "%-35s%-11s%-13s%-12s%-10s%-10s%-10s%-5s";
+        <output> jcs:printf($output-format, "Peer", "AS", "State", "Duration", "Active", "Received", "Accepted", "Description");
 
         /* Get a list of all security policies */
         var $show-bgp-summary = {
