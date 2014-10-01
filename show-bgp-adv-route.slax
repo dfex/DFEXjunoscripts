@@ -39,7 +39,7 @@ match / {
         	var $neighbour-list = jcs:invoke( $show-bgp-summary );
         	/* Loop through each peer looking for the ones the search-prefix is sent to*/
         	for-each ($neighbour-list/bgp-peer) {
-        		jcs:invoke(<command> "show route advertising protocol bgp ($neighbour-list/bgp-peer)";
+        		<output> "show route advertising protocol bgp ($neighbour-list/bgp-peer)";
             	<output> jcs:printf($output-format,
             	    peer-address,
             	    peer-as);
