@@ -1,0 +1,49 @@
+/* show-bgp-adv-route.slax
+ * October 1 2014
+ * Version 1.0
+ * Ben Dale - ben.dale@gmail.com
+ *
+ * Show all BGP peers a prefix is advertised to eg:
+ 
+router> op show-bgp-adv-route 172.16.0.2/32
+Advertised to:
+Peer		AS	 
+ *
+ */
+
+version 1.0;
+
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+
+import "../import/junos.xsl";
+
+param $search-prefix = "NIL";
+
+match / {
+    <op-script-results> {
+    	if ($search-prefix == "NIL") {
+    		/* No prefix specified */
+    		<output> "Error: No prefix specified";
+    		<output> "Usage: op show-bgp-adv-route 123.123.12.31/23";
+    	} else {
+        	var $output-format = "%-35s%-11s";
+        	<output> "Advertised to:";
+        	<output> jcs:printf($output-format, "Peer", "AS");
+		
+        	/* Get a list of all BGP peers */
+        	var $show-bgp-summary = {
+            	<command> "show bgp summary";
+        	}
+        	var $neighbour-list = jcs:invoke( $show-bgp-summary );
+        	/* Loop through each peer looking for the ones the search-prefix is sent to*/
+        	for-each ($neighbour-list/bgp-peer) {
+        		jcs:invoke(<command> "show route advertising protocol bgp ($neighbour-list/bgp-peer)";
+            	<output> jcs:printf($output-format,
+            	    peer-address,
+            	    peer-as);
+        	}
+        }
+    }
+}

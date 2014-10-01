@@ -20,12 +20,12 @@ match / {
         var $output-format = "%-35s%-11s%-13s%-12s%-10s%-10s%-10s%-5s";
         <output> jcs:printf($output-format, "Peer", "AS", "State", "Duration", "Active", "Received", "Accepted", "Description");
 
-        /* Get a list of all security policies */
+        /* Get a list of all peers */
         var $show-bgp-summary = {
             <command> "show bgp summary";
         }
         var $neighbour-list = jcs:invoke( $show-bgp-summary );
-        /* Loop through the results looking for count parameters */
+        /* Loop through each peer results summing prefix types */
         for-each ($neighbour-list/bgp-peer) {
             <output> jcs:printf($output-format,
                 peer-address,
