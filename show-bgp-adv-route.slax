@@ -36,7 +36,6 @@ match / {
         	var $show-bgp-summary = {
             	<command> "show bgp summary";
         	}
-        	var $neighbour-list = jcs:invoke( $show-bgp-summary );
         	/* Loop through each peer looking for the ones the search-prefix is sent to*/
         	for-each ($neighbour-list/bgp-peer) {
         		<output> "show route advertising protocol bgp ($neighbour-list/bgp-peer)";
