@@ -12,3 +12,8 @@ Peer                               AS         State        Duration    Active   
 2402:c001:fcd1:ba20:ae43:1001:2311 1234567890 Established  4w1d10h     45        50        50        Lab-MX80-01
 2402:c001:fcd1:ba21:ae43:1001:2311 1234567890 Established  4w1d10h     34        36        36        Lab-MX80-02
 ```
+You can test this directly from Junos providing your box can resolve DNS and reach the Internet:
+
+```
+op url https://raw.githubusercontent.com/dfex/DFEXjunoscripts/master/show-bgp-neat.slax
+```
