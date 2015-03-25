@@ -1,5 +1,7 @@
 ### show-bgp-neat
 
+This script provides a much neater output to "show bgp summary" including inline aggregation of routes from differnet address families:
+
 ```
 bdale@lab-acx-03> op show-bgp-neat
 Peer                               AS         State        Duration    Active    Recevied  Accepted  Description
