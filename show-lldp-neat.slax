@@ -3,7 +3,7 @@
  * Version 1.0
  * Ben Dale - ben.dale@gmail.com
  *
- * Take the best bits of show lldp neighbor and show lldp neighbor interface for a better summary
+ * Improves show lldp neighbor to present the Port ID as well as the Port Description
  */
 
 version 1.0;
@@ -28,12 +28,12 @@ match / {
 				<command> "show lldp neighbor interface " _ lldp-local-interface;
 			}
    			var $res-lldp-interface = jcs:invoke( $rpc-lldp-interface );
-   			<output> jcs:printf($output-format, 
-	        	$res-lldp-interface/lldp-neighbor-information/lldp-local-interface, 
-    	    	$res-lldp-interface/lldp-neighbor-information/lldp-local-parent-interface-name, 
-        		$res-lldp-interface/lldp-neighbor-information/lldp-remote-system-name, 
-        		$res-lldp-interface/lldp-neighbor-information/lldp-remote-port-id, 
-        		$res-lldp-interface/lldp-neighbor-information/lldp-remote-port-description);
+   			<output> jcs:printf($output-format,
+				$res-lldp-interface/lldp-neighbor-information/lldp-local-interface, 
+				$res-lldp-interface/lldp-neighbor-information/lldp-local-parent-interface-name, 
+				$res-lldp-interface/lldp-neighbor-information/lldp-remote-system-name, 
+				$res-lldp-interface/lldp-neighbor-information/lldp-remote-port-id, 
+				$res-lldp-interface/lldp-neighbor-information/lldp-remote-port-description);
 		}
 	}
 }
