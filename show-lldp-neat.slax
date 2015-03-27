@@ -34,7 +34,6 @@ match / {
         		$res-lldp-interface/lldp-neighbor-information/lldp-remote-system-name, 
         		$res-lldp-interface/lldp-neighbor-information/lldp-remote-port-id, 
         		$res-lldp-interface/lldp-neighbor-information/lldp-remote-port-description);
- 		
-    	}
+		}
 	}
 }
