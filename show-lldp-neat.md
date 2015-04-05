@@ -2,10 +2,10 @@
 
 This script provides a similar output to "show lldp neighbor" except it includes the LLDP Port ID field.
 
-Used in conjuction with **set protocols lldp port-id-subtype interface-name** on the remote switch, it will provide the far-end switch physical port name and description.
+Used in conjuction with **set protocols lldp port-id-subtype interface-name** on the remote switch, it will provide the far-end switch physical port name and description, even when a description is configured on the far-end interface.
 
 ```
-comlinx@GD-rck-22c> op show-lldp-neat    
+bdale@GD-rck-22c> op show-lldp-neat    
 Local Interface     Local Parent        Neighbour Hostname  Neighbour Interface Neighbour Interface Description
 ge-0/1/0.0          -                   GD-eng-22c          523                 ge-0/1/1.0                    
 ```
