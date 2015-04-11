@@ -1,0 +1,41 @@
+/* policy-hits.slax
+ * 6 May 2012
+ * Version 1.0
+ * Ben Dale - ben.dale@gmail.com
+ *
+ * Provides a summary view of all security policies configured
+ * on an SRX or J-Series router, including the number of hits
+ * each policy has received (provided action count has been
+ * enabled).
+ *
+ */
+
+version 1.0;
+
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+
+import "../import/junos.xsl";
+
+match / {
+        <op-script-results> {
+
+                /* Get a list of all security policies */
+                var $show-security-policies = {
+                        <command> "show security policies detail";
+                }
+                var $policies-list = jcs:invoke( $show-security-policies );
+                <output> jcs:printf("%-20s%-20s%-30s%-10s%-5s", "Source Zone", "Destination Zone", "Policy Name", "Action", "Hits");
+                /* Loop through the results looking for count parameters */
+
+                for-each ($policies-list/multi-routing-engine-item/security-policies/security-context/policies) {
+                        <output> jcs:printf("%-20s%-20s%-30s%-10s%-5s",
+                        ../context-information/source-zone-name,
+                        ../context-information/destination-zone-name,
+                        policy-information/policy-name,
+                        policy-information/policy-action/action-type,
+                        policy-information/policy-statistics-information/session-creations);
+                }
+        }
+}
