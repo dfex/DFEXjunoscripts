@@ -29,7 +29,7 @@ match / {
                 <output> jcs:printf("%-20s%-20s%-30s%-10s%-5s", "Source Zone", "Destination Zone", "Policy Name", "Action", "Hits");
                 /* Loop through the results looking for count parameters */
 
-                for-each ($policies-list/security-policies/security-context/policies) {
+                for-each ($policies-list/security-context/policies) {
                         <output> jcs:printf("%-20s%-20s%-30s%-10s%-5s",
                         ../context-information/source-zone-name,
                         ../context-information/destination-zone-name,
