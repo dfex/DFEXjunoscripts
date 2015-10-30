@@ -17,7 +17,7 @@ import "../import/junos.xsl";
 
 match / {
     <op-script-results> {
-        var $output-format = "%-35s%-11s%-13s%-12s%-10s%-10s%-10s%-5s";
+        var $output-format = "%-35s  %-8s  %-11s  %15s  %10s  %10s  %10s  %-5s";
         <output> jcs:printf($output-format, "Peer", "AS", "State", "Duration", "Active", "Received", "Accepted", "Description");
 
         /* Get a list of all peers */
