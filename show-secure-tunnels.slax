@@ -1,0 +1,36 @@
+/* show-secure-tunnels.slax
+ * 21 Dec 2015
+ * Version 1.0
+ * Ben Dale - ben.dale@gmail.com
+ *
+ * Provides a more descriptive output for checking Secure Tunnel (VPN)
+ * status on an SRX or J-Series router
+ *
+ */
+
+version 1.0;
+
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+
+import "../import/junos.xsl";
+
+match / {
+        <op-script-results> {
+                var $output-format = "%-25s%-12s%-8s%-8s%-40s";
+                <output> jcs:printf($output-format, "VPN Name", "Interface", "State", "Port", "Remote Gateway");
+                var $show-vpn-sa = {
+                        <command> "show security ipsec security-associations detail";
+                }
+                var $vpn-sa-list = jcs:invoke( $show-vpn-sa );
+                for-each ($vpn-sa-list/ipsec-security-associations-block) {
+                        <output> jcs:printf($output-format,
+                        sa-vpn-name,
+                        sa-df-bit-policy-name/sa-bind-interface,
+                        sa-block-state,
+                        ipsec-security-associations/sa-port,
+                        sa-remote-gateway);
+                }
+        }
+}

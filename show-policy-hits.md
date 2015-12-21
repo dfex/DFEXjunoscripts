@@ -30,4 +30,3 @@ You can test this directly from Junos providing your box can resolve DNS and rea
 op url https://raw.githubusercontent.com/dfex/DFEXjunoscripts/master/show-policy-hits.slax
 ```
 **NOTE**: Juniper has since provided this functionality built-in to Junos 12.1 and later, with```show security policies hit-count```, but for versions prior to that it was difficult to compile a readable list. 
-
