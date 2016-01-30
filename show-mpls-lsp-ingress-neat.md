@@ -16,7 +16,7 @@ References:
 Output:
 
 ```
-bdale@vsrx2# run op show-mpls-lsp-ingress-neat    
+bdale@vsrx2# op show-mpls-lsp-ingress-neat    
 Ingress LSP: 2 sessions
 Total 2 displayed, Up 2, Down 0
 
