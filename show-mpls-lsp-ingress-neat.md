@@ -16,7 +16,7 @@ References:
 Output:
 
 ```
-bdale@vsrx2# run op show-mpls-ldp-ingress-neat    
+bdale@vsrx2# run op show-mpls-lsp-ingress-neat    
 Ingress LSP: 2 sessions
 Total 2 displayed, Up 2, Down 0
 
@@ -27,5 +27,5 @@ To              From            State Rt P  Active Path                    LSP N
 You can test this directly from Junos providing your box can resolve DNS and reach the Internet:
 
 ```
-op url https://raw.githubusercontent.com/dfex/DFEXjunoscripts/master/show-mpls-lsp-neat.slax
+op url https://raw.githubusercontent.com/dfex/DFEXjunoscripts/master/show-mpls-lsp-ingress-neat.slax
 ```
