@@ -8,7 +8,7 @@ Tests include:
 * Comparing the number of established BGP peers against a configured threshold
 * Testing for the presence of a specified marker prefix in OSPF
 * Testing for the presence of a specified marker prefix in ISIS
-* Comparing the number of FULL OSPF neighbours against a configured threshold
+* Comparing the number of FULL OSPF neighbours against a configured threshold (This test is currently disabled due to the use of SLAX mvars requiring Junos 12.2 or later)
 * Testing for the presence of a specified (BGP) prefix from a specified AS
 * Comparing the number of active prefixes in a specified route-table against a configured threshold
 
