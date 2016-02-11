@@ -1,0 +1,30 @@
+/* connectedness.slax
+ * Version 0.1
+ * 11 February 2016
+ *
+ * ben.dale@gmail.com
+ * 
+ *  Measure the connectedness of a node
+ */
+
+version 1.0;
+
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+
+import "../import/junos.xsl";
+
+match / {
+    <op-script-results> {
+        var $router = jcs:open();
+        expr established_bgp_peers();
+    }
+}
+
+
+function established_bgp_peers() {
+    var $bgp-summary = <get-bgp-summary-information>;
+   	var $bgp-summary-result = jcs:execute($router, $bgp-summary);
+	<output> jcs:printf("%d", $bgp-summary-result/peer-count - $bgp-summary-result/down-peer-count);
+}
