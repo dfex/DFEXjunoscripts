@@ -7,24 +7,112 @@
  *  Measure the connectedness of a node
  */
 
-version 1.0;
+version 1.1;
 
 ns junos = "http://xml.juniper.net/junos/*/junos";
 ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
 ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+ns my = "http://www.example.com/myfunctions";
 
 import "../import/junos.xsl";
 
+var $router = jcs:open();
+
 match / {
     <op-script-results> {
-        var $router = jcs:open();
-        expr established_bgp_peers();
+        call established-bgp-peers( $min-peer-count = "0" );
+        call ospf-marker-route( $marker-route = "11.0.0.1/32" );
+        call isis-marker-route( $marker-route = "11.0.0.1/32" );
+        call full-ospf-neighbours( $area = "0", $min-ospf-neighbours = "4" );
+        call bgp-as-marker-route( $marker-route = "103.252.114.0/23", $as-number = "13414" );
+        call active-prefixes( $route-table = "inet.0", $min-active-routes = "5"); 
+    }
+}
+
+template established-bgp-peers( $min-peer-count ) {
+    var $bgp-summary = <get-bgp-summary-information>;
+   	var $bgp-summary-result = jcs:execute($router, $bgp-summary);
+	if ($bgp-summary-result/peer-count - $bgp-summary-result/down-peer-count < $min-peer-count) {
+	    <output> jcs:printf("%s %d %s %d", "FAIL: Available BGP Peers:", $bgp-summary-result/peer-count - $bgp-summary-result/down-peer-count, "of", $bgp-summary-result/peer-count );
+	}
+	else {
+	    <output> jcs:printf("%s %d %s %d", "PASS: Available BGP Peers:", $bgp-summary-result/peer-count - $bgp-summary-result/down-peer-count, "of", $bgp-summary-result/peer-count );
+    }	
+}
+
+template ospf-marker-route ( $marker-route ) {
+    var $ospf-routes = <get-route-information> {
+                            <destination> $marker-route;
+                            <protocol> ospf;
+                        }
+    var $ospf-route-result = jcs:execute($router, $ospf-routes);
+    if ($ospf-route-result/route-table/rt/rt-entry/active-tag == "*") {
+        <output> jcs:printf("%s %s %s", "PASS: OSPF marker route", $marker-route, "active");
+    }
+    else {
+        <output> jcs:printf("%s %s %s", "FAIL: OSPF marker route", $marker-route, "is inactive");
+    }
+}
+
+template isis-marker-route ( $marker-route ) {
+    var $isis-routes = <get-route-information> {
+                            <destination> $marker-route;
+                            <protocol> isis;
+                        }
+    var $isis-route-result = jcs:execute($router, $isis-routes);
+    if ($isis-route-result/route-table/rt/rt-entry/active-tag == "*") {
+        <output> jcs:printf("%s %s %s", "PASS: ISIS marker route", $marker-route, "active");
+    }
+    else {
+        <output> jcs:printf("%s %s %s", "FAIL: ISIS marker route", $marker-route, "is inactive");
+    }
+}
+
+template full-ospf-neighbours( $area, $min-ospf-neighbours ) {
+    var $ospf-neighbours = <get-ospf-neighbor-information> {
+                                <area> $area;
+                            }
+    var $ospf-neighbours-results = jcs:execute($router, $ospf-neighbours);
+/*  mvar $full-ospf-neighbour-count;
+    set $full-ospf-neighbour-count = 0;
+    for-each ($ospf-neighbours-results/ospf-neighbour) {
+        if ospf-neighbor-state == "Full" {
+            set $full-ospf-neighbour-count = $full-ospf-neighbour-count + 1;
+        }
+   	}
+   	if ($full-ospf-neighbour-count < $min-ospf-neighbours) {
+   	    <output> jcs:printf("%s %d", "FAIL: Full OSPF neighbours:", $full-ospf-neighbour-count); 
+   	}
+   	else {
+   	    <output> jcs:printf("%s %d", "PASS: Full OSPF neighbours:", $full-ospf-neighbour-count);    	
+   	}*/
+}
+
+template bgp-as-marker-route ( $marker-route, $as-number ) {
+    var $bgp-as-route = <get-route-information> {
+                            <destination> $marker-route;
+                            <protocol> bgp;
+                            <aspath-regex> $as-number _ ".*";
+                        }
+    var $bgp-as-route-result = jcs:execute($router, $bgp-as-route);
+    if ($bgp-as-route-result/route-table/rt/rt-entry/active-tag == "*") {
+        <output> jcs:printf("%s %s %s%s", "PASS: BGP marker route", $marker-route, "active from AS", $as-number);
+    }
+    else {
+        <output> jcs:printf("%s %s %s%s", "FAIL: BGP marker route", $marker-route, "inactive from AS", $as-number);
     }
 }
 
 
-function established_bgp_peers() {
-    var $bgp-summary = <get-bgp-summary-information>;
-   	var $bgp-summary-result = jcs:execute($router, $bgp-summary);
-	<output> jcs:printf("%d", $bgp-summary-result/peer-count - $bgp-summary-result/down-peer-count);
+template active-prefixes( $route-table, $min-active-routes ) {
+    var $active-table-prefixes = <get-route-information> {
+                                    <table> $route-table;
+                                }
+    var $active-table-prefixes-result = jcs:execute($router, $active-table-prefixes);
+    if ($active-table-prefixes-result/route-table/active-route-count < $min-active-routes) {
+        <output> jcs:printf("%s %d %s %s %s %d %s", "FAIL:", $active-table-prefixes-result/route-table/active-route-count, "active prefixes in", $route-table, "-", $min-active-routes,"required");
+    }
+    else {
+        <output> jcs:printf("%s %d %s %s %s %d %s", "PASS:", $active-table-prefixes-result/route-table/active-route-count, "active prefixes in", $route-table, "-", $min-active-routes,"required");
+    }        
 }
