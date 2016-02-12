@@ -23,14 +23,18 @@ Most variable names should be fairly self-explanatory
         	call isis-marker-route( $marker-route = "11.0.0.1/32" );
         	call full-ospf-neighbours( $area = "0", $min-ospf-neighbours = "4" );
         	call bgp-as-marker-route( $marker-route = "103.252.114.0/23", $as-number = "13414" );
-        	call active-prefixes( $route-table = "inet.0", $min-active-routes = "5"); 
+        	call active-prefixes( $route-table = "inet.0", $min-active-routes = "5");
+        	call active-next-hops( $prefix = "10.0.0.0/24", $route-table = "inet.0", $min-next-hops = "3" );
+
         }
     }
 
 ###Example output:
 	bdale@vsrx1-fried> op connectedness    
-	FAIL: Available BGP Peers: 0 of 4
-	PASS: OSPF marker route 11.0.0.1/32 is active
+	PASS: Available BGP Peers: 0 of 2
+	FAIL: OSPF marker route 11.0.0.1/32 is inactive
 	FAIL: ISIS marker route 11.0.0.1/32 is inactive
+	FAIL: Full OSPF neighbours: 0
 	FAIL: BGP marker route 103.252.114.0/23 inactive from AS13414
-	PASS: 5 active prefixes in inet.0 - 5 required
+	PASS: 13 active prefixes in inet.0 - 5 required
+	PASS: Prefix 11.0.0.0/24 has 5 out of 3 active next-hops

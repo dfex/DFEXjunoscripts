@@ -26,7 +26,7 @@ match / {
         call full-ospf-neighbours( $area = "0", $min-ospf-neighbours = "4" );
         call bgp-as-marker-route( $marker-route = "103.252.114.0/23", $as-number = "13414" );
         call active-prefixes( $route-table = "inet.0", $min-active-routes = "5" );
-        call active-next-hops( $prefix = "10.0.0.0/24", $route-table = "inet.0", $min-next-hops = "3" );
+        call active-next-hops( $prefix = "11.0.0.0/24", $route-table = "inet.0", $min-next-hops = "3" );
     }
 }
 
@@ -81,10 +81,10 @@ template full-ospf-neighbours( $area, $min-ospf-neighbours ) {
         }
    	}
    	if ($full-ospf-neighbour-count < $min-ospf-neighbours) {
-   	    <output> jcs:printf("%s %d", "FAIL: Full OSPF neighbours:", $full-ospf-neighbour-count); 
+   	    <output> jcs:printf("%s %d %s %d", "FAIL: Full OSPF neighbours:", $full-ospf-neighbour-count, "out of", $min-ospf-neighbours); 
    	}
    	else {
-   	    <output> jcs:printf("%s %d", "PASS: Full OSPF neighbours:", $full-ospf-neighbour-count);    	
+   	    <output> jcs:printf("%s %d %s %d", "PASS: Full OSPF neighbours:", $full-ospf-neighbour-count, "out of", $min-ospf-neighbours); 
    	}
 }
 
