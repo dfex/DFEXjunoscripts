@@ -25,7 +25,8 @@ match / {
         call isis-marker-route( $marker-route = "11.0.0.1/32" );
         call full-ospf-neighbours( $area = "0", $min-ospf-neighbours = "4" );
         call bgp-as-marker-route( $marker-route = "103.252.114.0/23", $as-number = "13414" );
-        call active-prefixes( $route-table = "inet.0", $min-active-routes = "5"); 
+        call active-prefixes( $route-table = "inet.0", $min-active-routes = "5" );
+        call active-next-hops( $prefix = "10.0.0.0/24", $route-table = "inet.0", $min-next-hops = "3" );
     }
 }
 
@@ -73,10 +74,9 @@ template full-ospf-neighbours( $area, $min-ospf-neighbours ) {
                                 <area> $area;
                             }
     var $ospf-neighbours-results = jcs:execute($router, $ospf-neighbours);
-/*  mvar $full-ospf-neighbour-count;
-    set $full-ospf-neighbour-count = 0;
+    mvar $full-ospf-neighbour-count = 0;
     for-each ($ospf-neighbours-results/ospf-neighbour) {
-        if ospf-neighbor-state == "Full" {
+        if (ospf-neighbor-state == "Full") {
             set $full-ospf-neighbour-count = $full-ospf-neighbour-count + 1;
         }
    	}
@@ -85,7 +85,7 @@ template full-ospf-neighbours( $area, $min-ospf-neighbours ) {
    	}
    	else {
    	    <output> jcs:printf("%s %d", "PASS: Full OSPF neighbours:", $full-ospf-neighbour-count);    	
-   	}*/
+   	}
 }
 
 template bgp-as-marker-route ( $marker-route, $as-number ) {
@@ -115,4 +115,24 @@ template active-prefixes( $route-table, $min-active-routes ) {
     else {
         <output> jcs:printf("%s %d %s %s %s %d %s", "PASS:", $active-table-prefixes-result/route-table/active-route-count, "active prefixes in", $route-table, "-", $min-active-routes,"required");
     }        
+}
+
+template active-next-hops( $prefix, $route-table, $min-next-hops ) {
+    var $active-next-hops = <get-route-information> {
+                                <table> $route-table;
+                                <destination> $prefix;
+                                <active-path>;
+                                <exact>;
+                            }
+    var $active-next-hops-result = jcs:execute($router, $active-next-hops);
+    mvar $active-nexthop-count = 0;
+    for-each ($active-next-hops-result/route-table/rt/rt-entry/nh) {
+        set $active-nexthop-count = $active-nexthop-count + 1;
+    }
+    if ($active-nexthop-count >= $min-next-hops ) {
+        <output> jcs:printf("%s %s %s %d %s %d %s", "PASS: Prefix", $prefix, "has", $active-nexthop-count, "out of", $min-next-hops, "active next-hops");        
+    }
+    else {
+        <output> jcs:printf("%s %s %s %d %s %d %s", "FAIL: Prefix", $prefix, "has only", $active-nexthop-count, "out of", $min-next-hops, "active next-hops");            
+    }
 }
