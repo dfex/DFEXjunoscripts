@@ -11,6 +11,7 @@ Tests include:
 * Comparing the number of FULL OSPF neighbours against a configured threshold (This test is currently disabled due to the use of SLAX mvars requiring Junos 12.2 or later)
 * Testing for the presence of a specified (BGP) prefix from a specified AS
 * Comparing the number of active prefixes in a specified route-table against a configured threshold
+* Comparing the number of active next-hops installed for a specified prefix against a configured threshold
 
 ###Example configuration:
 
