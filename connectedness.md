@@ -1,7 +1,12 @@
 # connectedness
 
-This script is used to perform a general health-check of the connectedness of a node.  
-It performs a series of 6 tests, which can be customised to suit the specific node they are being executed on. 
+This script is used to perform a number of general health-check tests in order to determine the "connectedness" of a node.
+
+It also allows for a number of actions to then be taken on the configuration of the router to propagate this connectivity state throughout a network.
+
+By default, the script will execute in "info" mode, which will simply summarise the current "connectedness" of the platform.
+
+When passed the execute parameter, the script will use the test results and make changes to the configuration.
 
 Tests include:
 
@@ -13,25 +18,40 @@ Tests include:
 * Comparing the number of active prefixes in a specified route-table against a configured threshold
 * Comparing the number of active next-hops installed for a specified prefix against a configured threshold
 
+Current actions include:
+
+* Overload an OSPF Area; in the master instance by default, or in a specified routing-instance
+* Overload an ISIS Area; in the master instance by default, or in a specified routing-instance
+
 ###Example configuration:
 
 Most variable names should be fairly self-explanatory
 
     match / {
-    	<op-script-results> {
-        	call established-bgp-peers( $min-peer-count = "0" );
-        	call ospf-marker-route( $marker-route = "11.0.0.1/32" );
-        	call isis-marker-route( $marker-route = "11.0.0.1/32" );
-        	call full-ospf-neighbours( $area = "0", $min-ospf-neighbours = "4" );
-        	call bgp-as-marker-route( $marker-route = "103.252.114.0/23", $as-number = "13414" );
-        	call active-prefixes( $route-table = "inet.0", $min-active-routes = "5");
-        	call active-next-hops( $prefix = "10.0.0.0/24", $route-table = "inet.0", $min-next-hops = "3" );
-
+        <op-script-results> {
+            if ($mode = "info") {
+                <output> jcs:printf("%s", "Informational mode" );
+                call established-bgp-peers( $min-peer-count = "0" );
+                call ospf-marker-route( $marker-route = "11.0.0.1/32" );
+                call isis-marker-route( $marker-route = "11.0.0.1/32" );
+                call full-ospf-neighbours( $area = "0", $min-ospf-neighbours = "4" );
+                call bgp-as-marker-route( $marker-route = "103.252.114.0/23", $as-number = "13414" );
+                call active-prefixes( $route-table = "inet.0", $min-active-routes = "5" );
+                call active-next-hops( $prefix = "11.0.0.0/24", $route-table = "inet.0", $min-next-hops = "3" );
+            }
+            else if ($mode = "execute") {
+                <output> jcs:printf("%s", "Execute mode" );
+                call overload-isis();
+                call overload-isis( $instance = "TEST-INSTANCE" );
+                call overload-ospf();
+                call overload-ospf( $instance = "TEST-INSTANCE" );
+            }
         }
     }
 
 ###Example output:
-	bdale@vsrx1-fried> op connectedness    
+	bdale@mx80-lab01> op connectedness
+	Informational mode
 	PASS: Available BGP Peers: 0 of 2
 	FAIL: OSPF marker route 11.0.0.1/32 is inactive
 	FAIL: ISIS marker route 11.0.0.1/32 is inactive
@@ -39,3 +59,10 @@ Most variable names should be fairly self-explanatory
 	FAIL: BGP marker route 103.252.114.0/23 inactive from AS13414
 	PASS: 13 active prefixes in inet.0 - 5 required
 	PASS: Prefix 11.0.0.0/24 has 5 out of 3 active next-hops
+    
+    bdale@mx80-lab01> op connectedness mode execute                           
+    Execute mode
+    Overloading ISIS in instance master
+    Overloading ISIS in instance TEST-INSTANCE
+    Overloading OSPF in instance master
+    Overloading OSPF in instance TEST-INSTANCE
