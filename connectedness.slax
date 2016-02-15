@@ -36,7 +36,7 @@ match / {
             call isis-marker-route( $marker-route = "11.0.0.1/32" );
             call full-ospf-neighbours( $area = "0", $min-ospf-neighbours = "4" );
             call bgp-as-marker-route( $marker-route = "103.252.114.0/23", $as-number = "13414" );
-            call active-prefixes( $route-table = "inet.0", $min-active-routes = "5" );
+            call active-prefixes-installed( $route-table = "inet.0", $min-active-routes = "5" );
             call active-next-hops( $prefix = "11.0.0.0/24", $route-table = "inet.0", $min-next-hops = "3" );
         }
         else if ($mode = "execute") {
@@ -48,12 +48,13 @@ match / {
             call overload-isis( $instance = "BEN" );
             call overload-ospf();
             call overload-ospf( $instance = "BEN" );
-            /*         - overload OSPF */
-            
+            call bgp-apply-group( $instance = "master", $bgp-group = "MYPEERS", $apply-group-name = "BGP-REJECT-ALL")
         }
     }
     var $close-results = jcs:close($router);
 }
+
+*/ --== Tests ==-- /*
 
 template established-bgp-peers( $min-peer-count ) {
     var $bgp-summary = <get-bgp-summary-information>;
@@ -129,7 +130,7 @@ template bgp-as-marker-route ( $marker-route, $as-number ) {
 }
 
 
-template active-prefixes( $route-table, $min-active-routes ) {
+template active-prefixes-installed( $route-table, $min-active-routes ) {
     var $active-table-prefixes = <get-route-information> {
                                     <table> $route-table;
                                 }
@@ -161,6 +162,8 @@ template active-next-hops( $prefix, $route-table, $min-next-hops ) {
         <output> jcs:printf("%s %s %s %d %s %d %s", "FAIL: Prefix", $prefix, "has only", $active-nexthop-count, "out of", $min-next-hops, "active next-hops");            
     }
 }
+
+*/ --== Actions ==-- /*
 
 template overload-ospf ( $instance = "master" ) {
     <output> jcs:printf("%s %s", "Overloading OSPF in instance", $instance );
@@ -199,6 +202,44 @@ template overload-ospf ( $instance = "master" ) {
     }
 }
 
+template remove-overload-ospf ( $instance = "master" ) {
+    <output> jcs:printf("%s %s", "Removing Overload from OSPF in instance", $instance );
+    if ($instance = "master") {
+        var $overload-config = <change> {
+                                    <protocols> {
+                                        <ospf> {
+                                            <overload delete="delete"> {
+                                            }
+                                        }
+                                    }
+                                }
+        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
+        if( $results //xnm:error ) {
+            <output> message;
+        }
+    }
+    else {
+        var $overload-config = <change> {
+                                    <routing-instances> {
+                                        <instance> {
+                                            <name> $instance;
+                                            <protocols> {
+                                                <ospf> {
+                                                    <overload delete="delete"> {
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
+        if( $results //xnm:error ) {
+            <output> message;
+        }
+    }
+}
+
+
 template overload-isis ( $instance = "master" ) {
     <output> jcs:printf("%s %s", "Overloading ISIS in instance", $instance );
     if ($instance = "master") {
@@ -234,4 +275,125 @@ template overload-isis ( $instance = "master" ) {
             <output> message;
         }
     }    
+}
+
+
+template remove-overload-isis ( $instance = "master" ) {
+    <output> jcs:printf("%s %s", "Removing Overload from ISIS in instance", $instance );
+    if ($instance = "master") {
+        var $overload-config = <change> {
+                                    <protocols> {
+                                        <isis> {
+                                            <overload delete="delete"> {
+                                            }
+                                        }
+                                    }
+                                }
+        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
+        if( $results //xnm:error ) {
+            <output> message;
+        }
+    }
+    else {
+        var $overload-config = <change> {
+                                <routing-instances> {
+                                        <instance> {
+                                            <name> $instance;
+                                            <protocols> {
+                                                <isis> {
+                                                    <overload delete="delete"> {
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
+        if( $results //xnm:error ) {
+            <output> message;
+        }
+    }    
+}
+
+
+template bgp-apply-group( $instance = "master", $bgp-group, $apply-group-name) {
+    <output> jcs:printf("%s %s %s %s %s %s", "Activating apply-group", $apply-group-name, "on BGP group", $bgp-group, "in routing-instance", $instance)
+    if ($instance = "master") {
+        var $apply-group-config = <configuration> {
+                                        <protocols> {
+                                            <bgp> {
+                                                <group> {
+                                                    <name> $bgp-group;
+                                                    <apply-group> $apply-group-name;
+                                                }
+                                            }
+                                        }
+                                    }
+        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $apply-group-config ); }
+        if( $results //xnm:error ) {
+            <output> message;
+        }
+    }
+    else {
+        var $apply-group-config = <configuration> {
+                                        <routing-instances> {
+                                            <instance> {
+                                                <name> $instance;
+                                                <protocols> {
+                                                    <bgp> {
+                                                        <group> {
+                                                            <name> $bgp-group;
+                                                            <apply-group> $apply-group-name;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $apply-group-config ); }
+        if( $results //xnm:error ) {
+            <output> message;
+        }
+    }
+}
+
+template remove-bgp-apply-group( $instance = "master", $bgp-group, $apply-group-name) {
+    <output> jcs:printf("%s %s %s %s %s %s", "Deactivating apply-group", $apply-group-name, "on BGP group", $bgp-group, "in routing-instance", $instance)
+    if ($instance = "master") {
+        var $apply-group-config = <change> {
+                                        <protocols> {
+                                            <bgp> {
+                                                <group> {
+                                                    <name> $bgp-group;
+                                                    <apply-group delete="delete"> $apply-group-name;
+                                                }
+                                            }
+                                        }
+                                    }
+        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $apply-group-config ); }
+        if( $results //xnm:error ) {
+            <output> message;
+        }
+    }
+    else {
+        var $apply-group-config = <change> {
+                                        <routing-instances> {
+                                            <instance> {
+                                                <name> $instance;
+                                                <protocols> {
+                                                    <bgp> {
+                                                        <group> {
+                                                            <name> $bgp-group;
+                                                            <apply-group delete="delete"> $apply-group-name;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $apply-group-config ); }
+        if( $results //xnm:error ) {
+            <output> message;
+        }
+    }
 }
