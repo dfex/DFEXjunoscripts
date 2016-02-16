@@ -41,20 +41,25 @@ match / {
         }
         else if ($mode = "execute") {
             <output> jcs:printf("%s", "Execute mode" );
-            /* syslog output, count score, execute configuration changes */
-            /* actions - apply BGP export filter to one or more neighbours */
-            /*         - overload ISIS */
-            call overload-isis();
-            call overload-isis( $instance = "BEN" );
-            call overload-ospf();
-            call overload-ospf( $instance = "BEN" );
-            call bgp-apply-group( $instance = "master", $bgp-group = "MYPEERS", $apply-group-name = "BGP-REJECT-ALL")
+         /* call overload-isis(); */
+         /* call overload-isis( $instance = "BEN" ); */
+         /* call overload-ospf(); */
+         /* call overload-ospf( $instance = "BEN" ); */
+         /* call bgp-apply-group( $bgp-group = "BEN", $apply-group-name = "BGP-REJECT-ALL"); */
+         /* call bgp-apply-group( $instance = "BEN", $bgp-group = "BEN", $apply-group-name = "BGP-INSTANCE-REJECT-ALL"); */
+
+         /* call remove-overload-isis(); */
+         /* call remove-overload-isis( $instance = "BEN" ); */
+         /* call remove-overload-ospf(); */
+         /* call remove-overload-ospf( $instance = "BEN" ); */
+         /* call remove-bgp-apply-group( $bgp-group = "BEN", $apply-group-name = "BGP-REJECT-ALL"); */
+         /* call remove-bgp-apply-group( $instance = "BEN", $bgp-group = "BEN", $apply-group-name = "BGP-INSTANCE-REJECT-ALL"); */
         }
     }
     var $close-results = jcs:close($router);
 }
 
-*/ --== Tests ==-- /*
+/* --== Tests ==-- */
 
 template established-bgp-peers( $min-peer-count ) {
     var $bgp-summary = <get-bgp-summary-information>;
@@ -163,11 +168,11 @@ template active-next-hops( $prefix, $route-table, $min-next-hops ) {
     }
 }
 
-*/ --== Actions ==-- /*
+/* --== Actions ==-- */
 
 template overload-ospf ( $instance = "master" ) {
     <output> jcs:printf("%s %s", "Overloading OSPF in instance", $instance );
-    if ($instance = "master") {
+    if ($instance == "master") {
         var $overload-config = <configuration> {
                                     <protocols> {
                                         <ospf> {
@@ -204,7 +209,7 @@ template overload-ospf ( $instance = "master" ) {
 
 template remove-overload-ospf ( $instance = "master" ) {
     <output> jcs:printf("%s %s", "Removing Overload from OSPF in instance", $instance );
-    if ($instance = "master") {
+    if ($instance == "master") {
         var $overload-config = <change> {
                                     <protocols> {
                                         <ospf> {
@@ -242,7 +247,7 @@ template remove-overload-ospf ( $instance = "master" ) {
 
 template overload-isis ( $instance = "master" ) {
     <output> jcs:printf("%s %s", "Overloading ISIS in instance", $instance );
-    if ($instance = "master") {
+    if ($instance == "master") {
         var $overload-config = <configuration> {
                                     <protocols> {
                                         <isis> {
@@ -280,7 +285,7 @@ template overload-isis ( $instance = "master" ) {
 
 template remove-overload-isis ( $instance = "master" ) {
     <output> jcs:printf("%s %s", "Removing Overload from ISIS in instance", $instance );
-    if ($instance = "master") {
+    if ($instance == "master") {
         var $overload-config = <change> {
                                     <protocols> {
                                         <isis> {
@@ -317,18 +322,19 @@ template remove-overload-isis ( $instance = "master" ) {
 
 
 template bgp-apply-group( $instance = "master", $bgp-group, $apply-group-name) {
-    <output> jcs:printf("%s %s %s %s %s %s", "Activating apply-group", $apply-group-name, "on BGP group", $bgp-group, "in routing-instance", $instance)
-    if ($instance = "master") {
+    <output> jcs:printf("%s %s %s %s %s %s", "Activating apply-group", $apply-group-name, "on BGP group", $bgp-group, "in routing-instance", $instance);
+    if ($instance == "master") {
         var $apply-group-config = <configuration> {
                                         <protocols> {
                                             <bgp> {
                                                 <group> {
                                                     <name> $bgp-group;
-                                                    <apply-group> $apply-group-name;
+                                                    <apply-groups> $apply-group-name;
                                                 }
                                             }
                                         }
                                     }
+        
         var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $apply-group-config ); }
         if( $results //xnm:error ) {
             <output> message;
@@ -343,7 +349,7 @@ template bgp-apply-group( $instance = "master", $bgp-group, $apply-group-name) {
                                                     <bgp> {
                                                         <group> {
                                                             <name> $bgp-group;
-                                                            <apply-group> $apply-group-name;
+                                                            <apply-groups> $apply-group-name;
                                                         }
                                                     }
                                                 }
@@ -358,14 +364,14 @@ template bgp-apply-group( $instance = "master", $bgp-group, $apply-group-name) {
 }
 
 template remove-bgp-apply-group( $instance = "master", $bgp-group, $apply-group-name) {
-    <output> jcs:printf("%s %s %s %s %s %s", "Deactivating apply-group", $apply-group-name, "on BGP group", $bgp-group, "in routing-instance", $instance)
-    if ($instance = "master") {
-        var $apply-group-config = <change> {
+    <output> jcs:printf("%s %s %s %s %s %s", "Deactivating apply-group", $apply-group-name, "on BGP group", $bgp-group, "in routing-instance", $instance);
+    if ($instance == "master") {
+        var $apply-group-config = <configuration> {
                                         <protocols> {
                                             <bgp> {
                                                 <group> {
                                                     <name> $bgp-group;
-                                                    <apply-group delete="delete"> $apply-group-name;
+                                                    <apply-groups delete="delete"> $apply-group-name;
                                                 }
                                             }
                                         }
@@ -376,7 +382,7 @@ template remove-bgp-apply-group( $instance = "master", $bgp-group, $apply-group-
         }
     }
     else {
-        var $apply-group-config = <change> {
+        var $apply-group-config = <configuration> {
                                         <routing-instances> {
                                             <instance> {
                                                 <name> $instance;
@@ -384,7 +390,7 @@ template remove-bgp-apply-group( $instance = "master", $bgp-group, $apply-group-
                                                     <bgp> {
                                                         <group> {
                                                             <name> $bgp-group;
-                                                            <apply-group delete="delete"> $apply-group-name;
+                                                            <apply-groups delete="delete"> $apply-group-name;
                                                         }
                                                     }
                                                 }

@@ -26,7 +26,8 @@ Current actions include:
 
 To do:
 
-* ~~Add functionality to remove actions (when connectedness is restored)~~ Test!
+* ~~Add functionality to remove actions (when connectedness is restored)~~
+* Test that removal of apply-group only affects specified apply-group and not all
 * Run pre-flight checks to ensure we're not performing commits on existing configuration
 * Add in thresholds/scoring system
 
