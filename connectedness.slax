@@ -38,6 +38,7 @@ match / {
             call bgp-as-marker-route( $marker-route = "103.252.114.0/23", $as-number = "13414" );
             call active-prefixes-installed( $route-table = "inet.0", $min-active-routes = "5" );
             call active-next-hops( $prefix = "11.0.0.0/24", $route-table = "inet.0", $min-next-hops = "3" );
+            call min-prefixes-received( $neighbour-ip = "1.1.1.1", $min-recevied-routes = "5" );
         }
         else if ($mode = "execute") {
             <output> jcs:printf("%s", "Execute mode" );
@@ -60,8 +61,24 @@ match / {
 }
 
 /* --== Tests ==-- */
+template min-prefixes-received( $neighbour-ip, $min-recevied-routes ) {
+    /* Confirm there are at least $min-active-routes prefixes being received and accepted from BGP peer $neighbour-ip */
+    var $bgp-neighbour = <get-bgp-neighbor-information> {
+                            <neighbor-address> $neighbour-ip;
+                        }
+   	var $bgp-neighbour-result = jcs:execute($router, $bgp-neighbour);
+    for-each ($bgp-neighbour-result/bgp-peer) {
+        if (sum(bgp-rib/accepted-prefix-count)) < $min-received-routes {
+            <output> jcs:printf("%s %d %s %d %s %s", "FAIL: Only receiving", sum(bgp-rib/accepted-prefix-count), "of", $$min-received-routes, "prefixes from peer", $neighbour-ip );
+        }
+        else {
+            <output> jcs:printf("%s %d %s %d %s %s", "PASS: Receiving", sum(bgp-rib/accepted-prefix-count), "of", $$min-received-routes, "prefixes from peer", $neighbour-ip );
+        }
+    }
+}
 
 template established-bgp-peers( $min-peer-count ) {
+    /* Confirm there are at least $min-peer-count BGP neighbours in "Established" state */
     var $bgp-summary = <get-bgp-summary-information>;
    	var $bgp-summary-result = jcs:execute($router, $bgp-summary);
 	if ($bgp-summary-result/peer-count - $bgp-summary-result/down-peer-count < $min-peer-count) {
@@ -73,6 +90,7 @@ template established-bgp-peers( $min-peer-count ) {
 }
 
 template ospf-marker-route ( $marker-route ) {
+    /* Confirm prefix $marker-route is an active OSPF route inet.0 */
     var $ospf-routes = <get-route-information> {
                             <destination> $marker-route;
                             <protocol> ospf;
@@ -87,7 +105,8 @@ template ospf-marker-route ( $marker-route ) {
 }
 
 template isis-marker-route ( $marker-route ) {
-    var $isis-routes = <get-route-information> {
+    /* Confirm prefix $marker-route is an active ISIS route inet.0 */
+        var $isis-routes = <get-route-information> {
                             <destination> $marker-route;
                             <protocol> isis;
                         }
@@ -101,6 +120,8 @@ template isis-marker-route ( $marker-route ) {
 }
 
 template full-ospf-neighbours( $area, $min-ospf-neighbours ) {
+    /* Confirm OSPF area $area has at least $min-ospf-neighbours in "Full" state */
+    /* Note that in broadcast domains, only DR and BDR will have Full adjacency states with all neighbours */
     var $ospf-neighbours = <get-ospf-neighbor-information> {
                                 <area> $area;
                             }
@@ -120,6 +141,7 @@ template full-ospf-neighbours( $area, $min-ospf-neighbours ) {
 }
 
 template bgp-as-marker-route ( $marker-route, $as-number ) {
+    /* Confirm prefix $marker-route from AS $as-path is an active BGP route in inet.0 */
     var $bgp-as-route = <get-route-information> {
                             <destination> $marker-route;
                             <protocol> bgp;
@@ -136,6 +158,7 @@ template bgp-as-marker-route ( $marker-route, $as-number ) {
 
 
 template active-prefixes-installed( $route-table, $min-active-routes ) {
+    /* Confirm there are at least $min-active-routes in $route-table table*/
     var $active-table-prefixes = <get-route-information> {
                                     <table> $route-table;
                                 }
@@ -149,6 +172,7 @@ template active-prefixes-installed( $route-table, $min-active-routes ) {
 }
 
 template active-next-hops( $prefix, $route-table, $min-next-hops ) {
+    /* Confirm that prefix $prefix in $route-table table has at least $min-next-hops active next-hops available for ECMP */
     var $active-next-hops = <get-route-information> {
                                 <table> $route-table;
                                 <destination> $prefix;
@@ -171,6 +195,7 @@ template active-next-hops( $prefix, $route-table, $min-next-hops ) {
 /* --== Actions ==-- */
 
 template overload-ospf ( $instance = "master" ) {
+    /* Overload OSPF in $instance instance */
     <output> jcs:printf("%s %s", "Overloading OSPF in instance", $instance );
     if ($instance == "master") {
         var $overload-config = <configuration> {
@@ -208,6 +233,7 @@ template overload-ospf ( $instance = "master" ) {
 }
 
 template remove-overload-ospf ( $instance = "master" ) {
+    /* Remove overload from OSPF in $instance instance */
     <output> jcs:printf("%s %s", "Removing Overload from OSPF in instance", $instance );
     if ($instance == "master") {
         var $overload-config = <change> {
@@ -246,6 +272,7 @@ template remove-overload-ospf ( $instance = "master" ) {
 
 
 template overload-isis ( $instance = "master" ) {
+    /* Overload ISIS in $instance instance */
     <output> jcs:printf("%s %s", "Overloading ISIS in instance", $instance );
     if ($instance == "master") {
         var $overload-config = <configuration> {
@@ -284,6 +311,7 @@ template overload-isis ( $instance = "master" ) {
 
 
 template remove-overload-isis ( $instance = "master" ) {
+    /* Remove overload from ISIS in $instance instance */
     <output> jcs:printf("%s %s", "Removing Overload from ISIS in instance", $instance );
     if ($instance == "master") {
         var $overload-config = <change> {
@@ -322,6 +350,7 @@ template remove-overload-isis ( $instance = "master" ) {
 
 
 template bgp-apply-group( $instance = "master", $bgp-group, $apply-group-name) {
+    /* Commit existing apply-group $apply-group-name to BGP group $bgp-group in $instance routing-instance */
     <output> jcs:printf("%s %s %s %s %s %s", "Activating apply-group", $apply-group-name, "on BGP group", $bgp-group, "in routing-instance", $instance);
     if ($instance == "master") {
         var $apply-group-config = <configuration> {
@@ -364,6 +393,7 @@ template bgp-apply-group( $instance = "master", $bgp-group, $apply-group-name) {
 }
 
 template remove-bgp-apply-group( $instance = "master", $bgp-group, $apply-group-name) {
+    /* Remove existing apply-group $apply-group-name from BGP group $bgp-group in $instance routing-instance */
     <output> jcs:printf("%s %s %s %s %s %s", "Deactivating apply-group", $apply-group-name, "on BGP group", $bgp-group, "in routing-instance", $instance);
     if ($instance == "master") {
         var $apply-group-config = <configuration> {
