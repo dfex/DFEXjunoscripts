@@ -196,22 +196,50 @@ template active-next-hops( $prefix, $route-table, $min-next-hops ) {
 
 template overload-ospf ( $instance = "master" ) {
     /* Overload OSPF in $instance instance */
+    /* this might be better if we do the various checks, then end up with a single config which we commit outside the if / else section */
+    /* would need a configuration variable with template-wide scope though.  Perhaps even a merge of the overload and remove-overload */
     <output> jcs:printf("%s %s", "Overloading OSPF in instance", $instance );
     if ($instance == "master") {
-        var $overload-config = <configuration> {
+        var $config-rpc = <get-configuration database="committed"> {
+                                <configuration> {
                                     <protocols> {
-                                        <ospf> {
-                                            <overload> {
+                                        <ospf>;
+                                    }
+                                }
+                            }
+        var $config = jcs:invoke( $config-rpc );
+        $ospf-overload = $config/protocols/ospf/overload;
+        if (jcs:empty( $ospf-overload )) {
+            var $overload-config = <configuration> {
+                                        <protocols> {
+                                            <ospf> {
+                                                <overload> {
+                                                }
+                                            }
+                                        }
+                                    }
+            var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
+            if( $results //xnm:error ) {
+                <output> message;
+            }
+        
+    }
+    else {
+        var $config-rpc = <get-configuration database="committed"> {
+                                <configuration> {
+                                    <routing-instances> {
+                                        <instance> {
+                                            <name> $instance;                            
+                                            <protocols> {
+                                                <ospf>;
                                             }
                                         }
                                     }
                                 }
-        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
-        if( $results //xnm:error ) {
-            <output> message;
-        }
-    }
-    else {
+                            }
+        var $config = jcs:invoke( $config-rpc );
+        $ospf-overload = $config/protocols/ospf/overload;
+        if (jcs:empty( $ospf-overload )) {
         var $overload-config = <configuration> {
                                     <routing-instances> {
                                         <instance> {
