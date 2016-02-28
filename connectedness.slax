@@ -240,7 +240,7 @@ template overload-ospf ( $instance = "master" ) {
                                 }
                             }
         var $config = jcs:invoke( $config-rpc );
-        $ospf-overload = $config/protocols/ospf/overload;
+        $ospf-overload = $config/routing-instances/instance[name==$instance]/protocols/ospf/overload;
         if (jcs:empty( $ospf-overload )) {
             var $overload-config = <configuration> {
                                         <routing-instances> {
@@ -310,7 +310,7 @@ template remove-overload-ospf ( $instance = "master" ) {
                                     }
                                 }
         var $config = jcs:invoke( $config-rpc );
-        $ospf-overload = $config/routing-instances/instance/name=$instance/protocols/ospf/overload;
+        $ospf-overload = $config/routing-instances/instance[name==$instance]/protocols/ospf/overload;
         if (jcs:empty( $ospf-overload )) {
                 <output> jcs:printf("%s %s", "Overload already removed from OSPF in instance", $instance );
         }
@@ -382,7 +382,7 @@ template overload-isis ( $instance = "master" ) {
                         }
                     }
         var $config = jcs:invoke( $config-rpc );
-        $isis-overload = $config/protocols/isis/overload;
+        $isis-overload = $config/routing-instances/instance[name==$instance]/protocols/isis/overload;
         if (jcs:empty( $isis-overload )) {
             <output> jcs:printf("%s %s", "Overloading ISIS in instance", $instance );
             var $overload-config = <configuration> {

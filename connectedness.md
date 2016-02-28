@@ -30,8 +30,9 @@ To do:
 * ~~Add new test for min-prefixes-received from a BGP peer~~ - Test
 * Test that removal of apply-group only affects specified apply-group and not all
 * Run pre-flight checks to ensure we're not performing commits on existing configuration
-* Add in thresholds/scoring system
-
+* Add in thresholds/scoring system - this will be an additive system so that multiple independent tests can be run while updating a master "score" variable - eg: 
+```bgp-connectedness-score += call active-prefixes-installed($route-table="PEER1.inet.0", $min-active-routes="500000")```
+```bgp-connectedness-score += call active-prefixes-installed($route-table="PEER2.inet.0", $min-active-routes="30000")```
 
 ###Example configuration:
 
