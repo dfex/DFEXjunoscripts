@@ -198,7 +198,6 @@ template overload-ospf ( $instance = "master" ) {
     /* Overload OSPF in $instance instance */
     /* this might be better if we do the various checks, then end up with a single config which we commit outside the if / else section */
     /* would need a configuration variable with template-wide scope though.  Perhaps even a merge of the overload and remove-overload */
-    <output> jcs:printf("%s %s", "Overloading OSPF in instance", $instance );
     if ($instance == "master") {
         var $config-rpc = <get-configuration database="committed"> {
                                 <configuration> {
@@ -210,6 +209,7 @@ template overload-ospf ( $instance = "master" ) {
         var $config = jcs:invoke( $config-rpc );
         $ospf-overload = $config/protocols/ospf/overload;
         if (jcs:empty( $ospf-overload )) {
+            <output> jcs:printf("%s %s", "Overloading OSPF in instance", $instance );
             var $overload-config = <configuration> {
                                         <protocols> {
                                             <ospf> {
@@ -222,7 +222,9 @@ template overload-ospf ( $instance = "master" ) {
             if( $results //xnm:error ) {
                 <output> message;
             }
-        
+        else {
+            <output> jcs:printf("%s %s", "OSPF already overloaded in instance", $instance );
+        }
     }
     else {
         var $config-rpc = <get-configuration database="committed"> {
@@ -240,22 +242,25 @@ template overload-ospf ( $instance = "master" ) {
         var $config = jcs:invoke( $config-rpc );
         $ospf-overload = $config/protocols/ospf/overload;
         if (jcs:empty( $ospf-overload )) {
-        var $overload-config = <configuration> {
-                                    <routing-instances> {
-                                        <instance> {
-                                            <name> $instance;
-                                            <protocols> {
-                                                <ospf> {
-                                                    <overload> {
+            var $overload-config = <configuration> {
+                                        <routing-instances> {
+                                            <instance> {
+                                                <name> $instance;
+                                                <protocols> {
+                                                    <ospf> {
+                                                        <overload> {
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
                                     }
-                                }
-        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
-        if( $results //xnm:error ) {
-            <output> message;
+            var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
+            if( $results //xnm:error ) {
+                <output> message;
+            }
+        else {
+            <output> jcs:printf("%s %s", "OSPF already overloaded in instance", $instance );
         }
     }
 }
@@ -301,38 +306,71 @@ template remove-overload-ospf ( $instance = "master" ) {
 
 template overload-isis ( $instance = "master" ) {
     /* Overload ISIS in $instance instance */
-    <output> jcs:printf("%s %s", "Overloading ISIS in instance", $instance );
     if ($instance == "master") {
-        var $overload-config = <configuration> {
-                                    <protocols> {
-                                        <isis> {
-                                            <overload> {
+        var $config-rpc = <get-configuration database="committed"> {
+                            <configuration> {
+                                <protocols> {
+                                    <isis>;
+                                }
+                            }
+                        }
+        var $config = jcs:invoke( $config-rpc );
+        $isis-overload = $config/protocols/isis/overload;
+        if (jcs:empty( $isis-overload )) {
+            <output> jcs:printf("%s %s", "Overloading ISIS in instance", $instance );
+            var $overload-config = <configuration> {
+                                        <protocols> {
+                                            <isis> {
+                                                <overload> {
+                                                }
                                             }
                                         }
                                     }
-                                }
-        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
-        if( $results //xnm:error ) {
-            <output> message;
+            var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
+            if( $results //xnm:error ) {
+                <output> message;
+            }
         }
-    }
+        else {
+            <output> jcs:printf("%s %s", "ISIS already overloaded in instance", $instance );
+        }
     else {
-        var $overload-config = <configuration> {
-                                <routing-instances> {
-                                        <instance> {
-                                            <name> $instance;
-                                            <protocols> {
-                                                <isis> {
-                                                    <overload> {
+        var $config-rpc = <get-configuration database="committed"> {
+                        <configuration> {
+                            <routing-instances> {
+                                <instance> {
+                                    <name> $instance; 
+                                    <protocols> {
+                                        <isis>;
+                                    }
+                                }
+                            }
+                        }
+                    }
+        var $config = jcs:invoke( $config-rpc );
+        $isis-overload = $config/protocols/isis/overload;
+        if (jcs:empty( $isis-overload )) {
+            <output> jcs:printf("%s %s", "Overloading ISIS in instance", $instance );
+            var $overload-config = <configuration> {
+                                       <routing-instances> {
+                                           <instance> {
+                                                <name> $instance;
+                                                <protocols> {
+                                                    <isis> {
+                                                        <overload> {
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
                                     }
-                                }
-        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
-        if( $results //xnm:error ) {
-            <output> message;
+            var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
+            if( $results //xnm:error ) {
+                <output> message;
+            }
+        }
+        else {
+            <output> jcs:printf("%s %s", "ISIS already overloaded in instance", $instance );
         }
     }    
 }
