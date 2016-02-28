@@ -267,9 +267,22 @@ template overload-ospf ( $instance = "master" ) {
 
 template remove-overload-ospf ( $instance = "master" ) {
     /* Remove overload from OSPF in $instance instance */
-    <output> jcs:printf("%s %s", "Removing Overload from OSPF in instance", $instance );
     if ($instance == "master") {
-        var $overload-config = <change> {
+        var $config-rpc = <get-configuration database="committed"> {
+                                <configuration> {
+                                    <protocols> {
+                                        <ospf>;
+                                    }
+                                }
+                            }
+        var $config = jcs:invoke( $config-rpc );
+        $ospf-overload = $config/protocols/ospf/overload;
+        if (jcs:empty( $ospf-overload )) {
+                <output> jcs:printf("%s %s", "Overload already removed from OSPF in instance", $instance );
+        }
+        else if ( $ospf-overload ) {   
+            <output> jcs:printf("%s %s", "Removing Overload from OSPF in instance", $instance );
+            var $overload-config = <change> {
                                     <protocols> {
                                         <ospf> {
                                             <overload delete="delete"> {
@@ -277,28 +290,49 @@ template remove-overload-ospf ( $instance = "master" ) {
                                         }
                                     }
                                 }
-        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
-        if( $results //xnm:error ) {
-            <output> message;
+            var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
+            if( $results //xnm:error ) {
+                <output> message;
+            }
         }
     }
     else {
-        var $overload-config = <change> {
+        var $config-rpc = <get-configuration database="committed"> {
+                                <configuration> {
                                     <routing-instances> {
                                         <instance> {
                                             <name> $instance;
-                                            <protocols> {
-                                                <ospf> {
-                                                    <overload delete="delete"> {
-                                                    }
+                                                <protocols> {
+                                                    <ospf>;
                                                 }
                                             }
                                         }
                                     }
                                 }
-        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
-        if( $results //xnm:error ) {
-            <output> message;
+        var $config = jcs:invoke( $config-rpc );
+        $ospf-overload = $config/routing-instances/instance/name=$instance/protocols/ospf/overload;
+        if (jcs:empty( $ospf-overload )) {
+                <output> jcs:printf("%s %s", "Overload already removed from OSPF in instance", $instance );
+        }
+        else if ( $ospf-overload ) {   
+            <output> jcs:printf("%s %s", "Removing Overload from OSPF in instance", $instance );
+            var $overload-config = <change> {
+                                        <routing-instances> {
+                                            <instance> {
+                                                <name> $instance;
+                                                <protocols> {
+                                                    <ospf> {
+                                                        <overload delete="delete"> {
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+            var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
+            if( $results //xnm:error ) {
+                <output> message;
+            }
         }
     }
 }
