@@ -482,43 +482,83 @@ template remove-overload-isis ( $instance = "master" ) {
 
 template bgp-apply-group( $instance = "master", $bgp-group, $apply-group-name) {
     /* Commit existing apply-group $apply-group-name to BGP group $bgp-group in $instance routing-instance */
-    <output> jcs:printf("%s %s %s %s %s %s", "Activating apply-group", $apply-group-name, "on BGP group", $bgp-group, "in routing-instance", $instance);
     if ($instance == "master") {
-        var $apply-group-config = <configuration> {
+        var $config-rpc = <get-configuration database="committed"> {
+                            <configuration> {
+                                <protocols> {
+                                    <bgp> {
+                                        <group> {
+                                            <name> $bgp-group;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+        var $config = jcs:invoke( $config-rpc );
+        $bgp-apply-group = $config/protocols/bgp/group[name==$bgp-group,apply-group==$apply-group-name];
+        if ( $bgp-apply-group ) {
+            <output> jcs:printf("%s %s %s %s %s %s", "Apply group", $apply-group-name, "already applied to BGP group", $bgp-group, "in instance", $instance );
+        }
+        else if ( jcs:empty( $bgp-apply-group )) {
+            <output> jcs:printf("%s %s %s %s %s %s", "Activating apply-group", $apply-group-name, "on BGP group", $bgp-group, "in routing-instance", $instance);
+            var $apply-group-config = <configuration> {
+                                            <protocols> {
+                                                <bgp> {
+                                                    <group> {
+                                                        <name> $bgp-group;
+                                                        <apply-groups> $apply-group-name;
+                                                    }
+                                                }
+                                            }
+                                        }
+            var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $apply-group-config ); }
+            if( $results //xnm:error ) {
+                <output> message;
+            }
+        }
+    }
+    else {
+        var $config-rpc = <get-configuration database="committed"> {
+                            <configuration> {
+                                <routing-instances> {
+                                    <instance> {
+                                        <name> $instance;
                                         <protocols> {
                                             <bgp> {
                                                 <group> {
                                                     <name> $bgp-group;
-                                                    <apply-groups> $apply-group-name;
                                                 }
                                             }
                                         }
                                     }
-        
-        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $apply-group-config ); }
-        if( $results //xnm:error ) {
-            <output> message;
+                                }
+                            }
+                        }
+        var $config = jcs:invoke( $config-rpc );
+        $bgp-apply-group = $config/routing-instances/instance[name==$instance]/protocols/bgp/group[name==$bgp-group,apply-group==$apply-group-name];
+        if ( $bgp-apply-group ) {
+            <output> jcs:printf("%s %s %s %s %s %s", "Apply group", $apply-group-name, "already applied to BGP group", $bgp-group, "in instance", $instance );
         }
-    }
-    else {
-        var $apply-group-config = <configuration> {
-                                        <routing-instances> {
-                                            <instance> {
-                                                <name> $instance;
-                                                <protocols> {
-                                                    <bgp> {
-                                                        <group> {
-                                                            <name> $bgp-group;
-                                                            <apply-groups> $apply-group-name;
+        else if ( jcs:empty( $bgp-apply-group )) {
+            var $apply-group-config = <configuration> {
+                                            <routing-instances> {
+                                                <instance> {
+                                                    <name> $instance;
+                                                    <protocols> {
+                                                        <bgp> {
+                                                            <group> {
+                                                                <name> $bgp-group;
+                                                                <apply-groups> $apply-group-name;
+                                                            }
                                                         }
                                                     }
                                                 }
                                             }
                                         }
-                                    }
-        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $apply-group-config ); }
-        if( $results //xnm:error ) {
-            <output> message;
+            var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $apply-group-config ); }
+            if( $results //xnm:error ) {
+                <output> message;
+            }
         }
     }
 }
