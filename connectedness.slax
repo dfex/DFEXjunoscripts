@@ -412,22 +412,53 @@ template overload-isis ( $instance = "master" ) {
 
 template remove-overload-isis ( $instance = "master" ) {
     /* Remove overload from ISIS in $instance instance */
-    <output> jcs:printf("%s %s", "Removing Overload from ISIS in instance", $instance );
     if ($instance == "master") {
-        var $overload-config = <change> {
-                                    <protocols> {
-                                        <isis> {
-                                            <overload delete="delete"> {
+        var $config-rpc = <get-configuration database="committed"> {
+                            <configuration> {
+                                <protocols> {
+                                    <isis>;
+                                }
+                            }
+                        }
+        var $config = jcs:invoke( $config-rpc );
+        $isis-overload = $config/protocols/isis/overload;
+        if (jcs:empty( $isis-overload )) {
+            <output> jcs:printf("%s %s", "Overload already removed from ISIS in instance", $instance );
+        }
+        else if ( $isis-overlaod ) {
+            var $overload-config = <change> {
+                                        <protocols> {
+                                            <isis> {
+                                                <overload delete="delete"> {
+                                                }
                                             }
                                         }
                                     }
-                                }
-        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
-        if( $results //xnm:error ) {
-            <output> message;
+            var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
+            if( $results //xnm:error ) {
+                <output> message;
+            }
         }
     }
     else {
+        var $config-rpc = <get-configuration database="committed"> {
+                            <configuration> {
+                                <routing-instances> {
+                                    <instance> {
+                                        <name> $instance;
+                                        <protocols> {
+                                            <isis>;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+        var $config = jcs:invoke( $config-rpc );
+        $isis-overload = $config/routing-instances/instance[name==$instance]/protocols/isis/overload;
+        if (jcs:empty( $isis-overload )) {
+            <output> jcs:printf("%s %s", "Overload already removed from ISIS in instance", $instance );
+        }
+        else if ( $isis-overlaod ) {
         var $overload-config = <change> {
                                 <routing-instances> {
                                         <instance> {
