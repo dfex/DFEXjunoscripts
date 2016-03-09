@@ -8,6 +8,8 @@ By default, the script will execute in "info" mode, which will simply summarise 
 
 When passed the execute parameter, the script will use the test results and make changes to the configuration.
 
+Ideally connectedness would be triggered at regular intervals (5 min) via an event script, and continually re-assess the connectedness of a node, applying or removing actions as the status of the node changes.
+
 Tests include:
 
 * Comparing the number of established BGP peers against a configured threshold
