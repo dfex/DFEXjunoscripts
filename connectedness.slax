@@ -38,7 +38,7 @@ match / {
             call bgp-as-marker-route( $marker-route = "103.252.114.0/23", $as-number = "13414" );
             call active-prefixes-installed( $route-table = "inet.0", $min-active-routes = "5" );
             call active-next-hops( $prefix = "11.0.0.0/24", $route-table = "inet.0", $min-next-hops = "3" );
-            call min-prefixes-received( $neighbour-ip = "1.1.1.1", $min-recevied-routes = "5" );
+            call min-prefixes-received( $neighbour-ip = "1.1.1.1", $min-recevied-routes = "5" );            
         }
         else if ($mode = "execute") {
             <output> jcs:printf("%s", "Execute mode" );
@@ -68,11 +68,11 @@ template min-prefixes-received( $neighbour-ip, $min-recevied-routes ) {
                         }
    	var $bgp-neighbour-result = jcs:execute($router, $bgp-neighbour);
     for-each ($bgp-neighbour-result/bgp-peer) {
-        if (sum(bgp-rib/accepted-prefix-count)) < $min-received-routes {
-            <output> jcs:printf("%s %d %s %d %s %s", "FAIL: Only receiving", sum(bgp-rib/accepted-prefix-count), "of", $$min-received-routes, "prefixes from peer", $neighbour-ip );
+        if ((sum(bgp-rib/accepted-prefix-count)) < $min-received-routes ){
+            <output> jcs:printf("%s %d %s %d %s %s", "FAIL: Only receiving", sum(bgp-rib/accepted-prefix-count), "of", $min-received-routes, "prefixes from peer", $neighbour-ip );
         }
         else {
-            <output> jcs:printf("%s %d %s %d %s %s", "PASS: Receiving", sum(bgp-rib/accepted-prefix-count), "of", $$min-received-routes, "prefixes from peer", $neighbour-ip );
+            <output> jcs:printf("%s %d %s %d %s %s", "PASS: Receiving", sum(bgp-rib/accepted-prefix-count), "of", $min-received-routes, "prefixes from peer", $neighbour-ip );
         }
     }
 }
@@ -194,7 +194,7 @@ template active-next-hops( $prefix, $route-table, $min-next-hops ) {
 
 /* --== Actions ==-- */
 
-template overload-ospf ( $instance = "master" ) {
+template overload-ospf( $instance = "master" ) {
     /* Overload OSPF in $instance instance */
     /* this might be better if we do the various checks, then end up with a single config which we commit outside the if / else section */
     /* would need a configuration variable with template-wide scope though.  Perhaps even a merge of the overload and remove-overload */
@@ -207,7 +207,7 @@ template overload-ospf ( $instance = "master" ) {
                                 }
                             }
         var $config = jcs:invoke( $config-rpc );
-        $ospf-overload = $config/protocols/ospf/overload;
+        var $ospf-overload = $config/protocols/ospf/overload;
         if (jcs:empty( $ospf-overload )) {
             <output> jcs:printf("%s %s", "Overloading OSPF in instance", $instance );
             var $overload-config = <configuration> {
@@ -226,6 +226,7 @@ template overload-ospf ( $instance = "master" ) {
             <output> jcs:printf("%s %s", "OSPF already overloaded in instance", $instance );
         }
     }
+    }
     else {
         var $config-rpc = <get-configuration database="committed"> {
                                 <configuration> {
@@ -240,7 +241,7 @@ template overload-ospf ( $instance = "master" ) {
                                 }
                             }
         var $config = jcs:invoke( $config-rpc );
-        $ospf-overload = $config/routing-instances/instance[name==$instance]/protocols/ospf/overload;
+        var $ospf-overload = $config/routing-instances/instance[name==$instance]/protocols/ospf/overload;
         if (jcs:empty( $ospf-overload )) {
             var $overload-config = <configuration> {
                                         <routing-instances> {
@@ -259,13 +260,14 @@ template overload-ospf ( $instance = "master" ) {
             if( $results //xnm:error ) {
                 <output> message;
             }
+        }
         else {
             <output> jcs:printf("%s %s", "OSPF already overloaded in instance", $instance );
         }
     }
 }
 
-template remove-overload-ospf ( $instance = "master" ) {
+template remove-overload-ospf( $instance = "master" ) {
     /* Remove overload from OSPF in $instance instance */
     if ($instance == "master") {
         var $config-rpc = <get-configuration database="committed"> {
@@ -276,7 +278,7 @@ template remove-overload-ospf ( $instance = "master" ) {
                                 }
                             }
         var $config = jcs:invoke( $config-rpc );
-        $ospf-overload = $config/protocols/ospf/overload;
+        var $ospf-overload = $config/protocols/ospf/overload;
         if (jcs:empty( $ospf-overload )) {
                 <output> jcs:printf("%s %s", "Overload already removed from OSPF in instance", $instance );
         }
@@ -310,7 +312,7 @@ template remove-overload-ospf ( $instance = "master" ) {
                                     }
                                 }
         var $config = jcs:invoke( $config-rpc );
-        $ospf-overload = $config/routing-instances/instance[name==$instance]/protocols/ospf/overload;
+        var $ospf-overload = $config/routing-instances/instance[name==$instance]/protocols/ospf/overload;
         if (jcs:empty( $ospf-overload )) {
                 <output> jcs:printf("%s %s", "Overload already removed from OSPF in instance", $instance );
         }
@@ -337,7 +339,6 @@ template remove-overload-ospf ( $instance = "master" ) {
     }
 }
 
-
 template overload-isis ( $instance = "master" ) {
     /* Overload ISIS in $instance instance */
     if ($instance == "master") {
@@ -349,7 +350,7 @@ template overload-isis ( $instance = "master" ) {
                             }
                         }
         var $config = jcs:invoke( $config-rpc );
-        $isis-overload = $config/protocols/isis/overload;
+        var $isis-overload = $config/protocols/isis/overload;
         if (jcs:empty( $isis-overload )) {
             <output> jcs:printf("%s %s", "Overloading ISIS in instance", $instance );
             var $overload-config = <configuration> {
@@ -368,6 +369,7 @@ template overload-isis ( $instance = "master" ) {
         else {
             <output> jcs:printf("%s %s", "ISIS already overloaded in instance", $instance );
         }
+    }
     else {
         var $config-rpc = <get-configuration database="committed"> {
                         <configuration> {
@@ -382,7 +384,7 @@ template overload-isis ( $instance = "master" ) {
                         }
                     }
         var $config = jcs:invoke( $config-rpc );
-        $isis-overload = $config/routing-instances/instance[name==$instance]/protocols/isis/overload;
+        var $isis-overload = $config/routing-instances/instance[name==$instance]/protocols/isis/overload;
         if (jcs:empty( $isis-overload )) {
             <output> jcs:printf("%s %s", "Overloading ISIS in instance", $instance );
             var $overload-config = <configuration> {
@@ -421,7 +423,7 @@ template remove-overload-isis ( $instance = "master" ) {
                             }
                         }
         var $config = jcs:invoke( $config-rpc );
-        $isis-overload = $config/protocols/isis/overload;
+        var $isis-overload = $config/protocols/isis/overload;
         if (jcs:empty( $isis-overload )) {
             <output> jcs:printf("%s %s", "Overload already removed from ISIS in instance", $instance );
         }
@@ -454,12 +456,12 @@ template remove-overload-isis ( $instance = "master" ) {
                             }
                         }
         var $config = jcs:invoke( $config-rpc );
-        $isis-overload = $config/routing-instances/instance[name==$instance]/protocols/isis/overload;
+        var $isis-overload = $config/routing-instances/instance[name==$instance]/protocols/isis/overload;
         if (jcs:empty( $isis-overload )) {
             <output> jcs:printf("%s %s", "Overload already removed from ISIS in instance", $instance );
         }
         else if ( $isis-overlaod ) {
-        var $overload-config = <change> {
+            var $overload-config = <change> {
                                 <routing-instances> {
                                         <instance> {
                                             <name> $instance;
@@ -472,9 +474,10 @@ template remove-overload-isis ( $instance = "master" ) {
                                         }
                                     }
                                 }
-        var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
-        if( $results //xnm:error ) {
-            <output> message;
+            var $results := { call jcs:load-configuration( $action = "merge", $connection = $router, $configuration = $overload-config ); }
+            if( $results //xnm:error ) {
+                <output> message;
+            }
         }
     }    
 }
@@ -495,7 +498,7 @@ template bgp-apply-group( $instance = "master", $bgp-group, $apply-group-name) {
                             }
                         }
         var $config = jcs:invoke( $config-rpc );
-        $bgp-apply-group = $config/protocols/bgp/group[name==$bgp-group,apply-group==$apply-group-name];
+        var $bgp-apply-group = $config/protocols/bgp/group[name==$bgp-group][apply-group==$apply-group-name];
         if ( $bgp-apply-group ) {
             <output> jcs:printf("%s %s %s %s %s %s", "Apply group", $apply-group-name, "already applied to BGP group", $bgp-group, "in instance", $instance );
         }
@@ -535,7 +538,7 @@ template bgp-apply-group( $instance = "master", $bgp-group, $apply-group-name) {
                             }
                         }
         var $config = jcs:invoke( $config-rpc );
-        $bgp-apply-group = $config/routing-instances/instance[name==$instance]/protocols/bgp/group[name==$bgp-group,apply-group==$apply-group-name];
+        var $bgp-apply-group = $config/routing-instances/instance[name==$instance]/protocols/bgp/group[name==$bgp-group][apply-group==$apply-group-name];
         if ( $bgp-apply-group ) {
             <output> jcs:printf("%s %s %s %s %s %s", "Apply group", $apply-group-name, "already applied to BGP group", $bgp-group, "in instance", $instance );
         }
