@@ -6,7 +6,7 @@ It also allows for a number of actions to then be taken on the configuration of 
 
 By default, the script will execute in "info" mode, which will simply summarise the current "connectedness" of the platform.
 
-When passed the execute parameter, the script will use the test results and make changes to the configuration.
+When passed the ```mode execute``` parameter, the script will use the test results and make changes to the configuration.
 
 Ideally connectedness would be triggered at regular intervals (5 min) via an event script, and continually re-assess the connectedness of a node, applying or removing actions as the status of the node changes.
 
@@ -67,6 +67,7 @@ Most variable names should be fairly self-explanatory
     }
 
 ###Example output:
+
 	bdale@mx80-lab01> op connectedness
 	Informational mode
 	PASS: Available BGP Peers: 0 of 2
