@@ -1,0 +1,63 @@
+/* chassis-beacon.slax
+ * January 8 2020
+ * Version 1.0
+ * Ben Dale - ben.dale@gmail.com
+ *
+ * Issue chassis beacon for a set period of time eg:
+ *
+ * op chassis-beacon fpc 2 timeout 10
+ *
+ */
+
+version 1.0;
+
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+
+import "../import/junos.xsl";
+
+var $arguments = {
+    <argument> {
+        <name> "fpc";
+        <description> "fpc number for beacon";
+    }
+    <argument> {
+        <name> "timeout";
+        <description> "timeout (seconds) to show beacon";
+    }
+}
+param $fpc;
+param $timeout;
+match / {
+    <op-script-results> {
+        if ($timeout = '') {
+            <xnm:error> {
+                <message> "missing mandatory argument 'timeout'";
+            }
+        } else if ($fpc =''){
+            <xnm:error> {
+                <message> "missing mandatory argument 'fpc'";
+        } else {
+            var $beaconon = {
+                <command> 'request chassis beacon fpc ' _ $fpc _ ' on';
+            }
+            var $beaconoff = {
+                <command> 'request chassis beacon fpc ' _ $fpc _ ' off';
+            }
+            var $onresult = jcs:invoke($beaconon);
+            <output> {
+                expr "Enabling beacon on FPC ";
+                expr $fpc;
+                expr '. ';
+            }
+            jcs:sleep($timeout)
+            var $offresult = jcs:invoke($beaconoff);
+            <output> {
+                expr "Disabling beacon on FPC ";
+                expr $fpc;
+                expr '. ';
+            }
+        }
+    }
+}
