@@ -1,0 +1,45 @@
+/* show-bgp-neat-order.slax
+ * November 19 2021
+ * Version 1.0
+ * Ben Dale - ben.dale@gmail.com
+ *
+ * Neaten up "show bgp summary" to one neighbour per line, sorted by peer description
+ * Props to Phil Shafer (phil@juniper.net) for much neater, backwards compatible prefix summing
+ */
+
+version 1.1;
+
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+
+import "../import/junos.xsl";
+
+match / {
+    <op-script-results> {
+        var $output-format = "%-35s  %-11s  %-13s  %18s  %10s  %10s  %10s  %-5s";
+        <output> jcs:printf($output-format, "Peer", "AS", "State", "Duration", "Active", "Received", "Accepted", "Description");
+
+        /* Get a list of all peers */
+        var $show-bgp-summary = {
+            <command> "show bgp summary";
+        }
+        var $neighbour-list = jcs:invoke( $show-bgp-summary );
+        /* Loop through each peer results summing prefix types */
+        for-each ($neighbour-list/bgp-peer) {
+            sort description {
+                data-type "text";
+                order "ascending";
+            }
+            <output> jcs:printf($output-format,
+                peer-address,
+                peer-as,
+                peer-state,
+                elapsed-time,
+                sum(bgp-rib/active-prefix-count),
+                sum(bgp-rib/received-prefix-count),
+                sum(bgp-rib/accepted-prefix-count),
+                description);
+        }
+    }
+}
